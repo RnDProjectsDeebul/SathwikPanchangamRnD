@@ -1,0 +1,10 @@
+pathlib
+torch
+neptune
+cv2
+torchvision
+numpy
+pandas
+matplotlib
+sklearn
+seaborn
