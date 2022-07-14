@@ -28,3 +28,14 @@
 
 ![](images/overall_project_approach.png)
 ![](images/uncertainty_generator.png)
+
+## Research questions
+
+* Why is it difficult to define ground truth for uncertainty estimation?
+
+* Which method can be used for determining the ground truth uncertainty labels?
+    * How do we generate ground truth values from the rule based criteria?
+    * How do we map the uncertainities to the synthetic data-sets?
+
+* What are the requirements for generating uncertainty in different scenarios?
+ * What should be the threshold region for the uncertainty in different scenarios?
