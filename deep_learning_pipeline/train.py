@@ -1,15 +1,17 @@
 # Import modules
+from sched import scheduler
 import torch
 
 
 # Training class
 class Training():
-    def __init__(self,num_epochs:int,model = None,criterion = None,optimizer = None,trainloader = None,testloader = None,logger = None):
+    def __init__(self,num_epochs:int,model = None,criterion = None,optimizer = None,scheduler=None,trainloader = None,testloader = None,logger = None):
         
         self.num_epochs = num_epochs
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.trainloader = trainloader
         self.testloader = testloader
         self.run = logger
@@ -40,6 +42,7 @@ class Training():
                 loss.backward()
                 self.optimizer.step()
 
+
             else:
                 total_train_loss = 0
                 num_correct_predictions = 0
@@ -66,6 +69,8 @@ class Training():
                         top_p, top_class = probabilities.topk(1, dim=1)
                         equals = top_class == labels.view(*top_class.shape)
                         num_correct_predictions += equals.sum().item()
+                
+                
                  # Calculating the mean loss to enable comparison between training and test sets.
                 train_loss = total_train_loss/len(self.trainloader.dataset)
                 test_loss = total_test_loss/len(self.testloader.dataset)
@@ -74,6 +79,8 @@ class Training():
                 self.train_losses.append(train_loss)
                 self.test_losses.append(test_loss)
 
+                mean_loss = sum(self.train_losses)/len(self.train_losses)
+                self.scheduler.step(mean_loss)
 
                 # Printing the results
                 print("Epoch: {}/{}... ".format(epoch+1,self.num_epochs),

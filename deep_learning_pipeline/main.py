@@ -41,6 +41,10 @@ loss_function = nn.CrossEntropyLoss()
 # Creating an optimizer
 optimizer = torch.optim.Adam(model.parameters(),parameters['lr'])
 
+# Learning rate scheduler
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, patience=4,verbose=True)
+
 # Logging the model architecture, lossfunction and optimizer.
 run['config/model'] = type(model).__name__
 run['config/criterion'] = type(loss_function).__name__
@@ -55,7 +59,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
 
-train_model = Training(num_epochs=parameters['num_epochs'],model=model,criterion=loss_function,optimizer=optimizer,trainloader=train_loader,testloader=test_loader,logger=run)
+train_model = Training(num_epochs=parameters['num_epochs'],model=model,criterion=loss_function,optimizer=optimizer,scheduler=scheduler,trainloader=train_loader,testloader=test_loader,logger=run)
 
 training_results = train_model.train(device=device)
 
