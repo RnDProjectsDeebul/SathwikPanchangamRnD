@@ -7,9 +7,11 @@ def load_data(data_dir,logger):
     # Create transform for preprocessing
     transform = transforms.Compose([
         transforms.ToTensor(),
+        transforms.CenterCrop(10),
         transforms.Resize((32,32)),
         transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5)),
-        transforms.RandomHorizontalFlip()
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip()
         ])
 
     # from dataloader import trainloader, testloader
