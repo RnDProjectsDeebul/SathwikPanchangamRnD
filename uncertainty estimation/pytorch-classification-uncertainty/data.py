@@ -14,35 +14,45 @@ from torchvision.datasets import ImageFolder
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader , random_split
 
+
 data_dir = '/home/sathwikpanchngam/rnd/Datasets/real_world/asus_combined/'
 
-transform = transforms.Compose([
+def load_data(data_dir,logger):
+
+    transform = transforms.Compose([
         transforms.CenterCrop(10),
         transforms.Resize((32,32)),
         transforms.RandomRotation(10),
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
+        transforms.Normalize((0.5,0.5,0.5),
+        (0.5,0.5,0.5))
         ])
 
-data_set = ImageFolder(data_dir,transform=transform)
+    data_set = ImageFolder(data_dir,transform=transform)
+    num_valid = int(np.floor(0.2*len(data_set)))
+    num_test = int(np.floor(0.1*len(data_set)))
+    num_train = len(data_set)-num_valid - num_test
 
-num_valid = int(np.floor(0.2*len(data_set)))
-num_test = int(np.floor(0.1*len(data_set)))
-num_train = len(data_set)-num_valid - num_test
+    train_set,validation_set,test_set = random_split(data_set, [num_train,num_valid,num_test])
 
-train_set,validation_set,test_set = random_split(data_set, [num_train,num_valid,num_test])
+    train_dataloader = DataLoader(dataset=train_set,batch_size=4,shuffle=True)
+    validation_dataloader = DataLoader(dataset=validation_set,batch_size=4,shuffle=True)
+    test_dataloader = DataLoader(dataset=test_set,batch_size=4,shuffle=True)
 
-train_dataloader = DataLoader(dataset=train_set,batch_size=4,shuffle=True)
-validation_dataloader = DataLoader(dataset=validation_set,batch_size=4,shuffle=True)
-test_dataloader = DataLoader(dataset=test_set,batch_size=4,shuffle=True)
+    dataloaders = {
+        "train": train_dataloader,
+        "val": validation_dataloader,
+        "test": test_dataloader }
 
-dataloaders = {
-    "train": train_dataloader,
-    "val": validation_dataloader,
-    "test": test_dataloader
-}
+    logger['config/dataset/transforms'] = transform
+    logger['config/dataset/total_size'] = data_set
+    logger['config/dataset/train_size'] = len(train_dataloader)
+    logger['config/dataset/test_size'] = len(test_dataloader)
+    logger['config/dataset/validation_size'] = len(validation_dataloader)
+
+    return dataloaders
 
 
 '''
