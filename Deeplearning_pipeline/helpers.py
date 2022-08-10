@@ -10,6 +10,10 @@ from scikitplot.metrics import plot_confusion_matrix
 import seaborn as sn
 import glob
 
+def one_hot_embedding(labels, num_classes=10):
+    # Convert to One Hot Encoding
+    y = torch.eye(num_classes)
+    return y[labels]
 
 def save_architecture_txt(model,dir_path,filename):
         complete_file_name = os.path.join(dir_path, filename+"_arch.txt")
@@ -59,3 +63,14 @@ def get_f1_score(true_labels,predicted_labels):
 def get_recall_score(true_labels,predicted_labels):
         recall = recall_score(true_labels, predicted_labels,average='weighted')
         return recall
+
+def plot_loss(train_loss,valid_loss):
+        fig, ax = plt.subplots(nrows=1,ncols=1)
+        ax.plot(train_loss,valid_loss)
+        fig.savefig('/home/sathwikpanchngam/rnd/github_projects/SathwikPanchangamRnD/Deeplearning_pipeline/results/losses_plot.png')
+        
+
+def plot_accuracies(train_acc,valid_acc):
+        fig, ax = plt.subplots(nrows=1,ncols=1)
+        ax.plot(train_acc,valid_acc)
+        fig.savefig('/home/sathwikpanchngam/rnd/github_projects/SathwikPanchangamRnD/Deeplearning_pipeline/results/accuracies_plot.png')
