@@ -68,9 +68,11 @@ def plot_loss(train_loss,valid_loss):
         fig, ax = plt.subplots(nrows=1,ncols=1)
         ax.plot(train_loss,valid_loss)
         fig.savefig('/home/sathwikpanchngam/rnd/github_projects/SathwikPanchangamRnD/Deeplearning_pipeline/results/losses_plot.png')
+        # Add saving path as an input parameter to the function
         
 
 def plot_accuracies(train_acc,valid_acc):
         fig, ax = plt.subplots(nrows=1,ncols=1)
         ax.plot(train_acc,valid_acc)
         fig.savefig('/home/sathwikpanchngam/rnd/github_projects/SathwikPanchangamRnD/Deeplearning_pipeline/results/accuracies_plot.png')
+        # Add saving path as an input parameter to the function
