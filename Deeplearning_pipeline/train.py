@@ -154,3 +154,7 @@ def train_model(model=None,
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model,train_losses,valid_losses
+
+
+
+# TODO: Add early stopping, check if you need to return anything else. also plot confusion matrix, losses, etc using seaborn after saving the values as pandas dataframes(csv files)
