@@ -12,13 +12,12 @@ import matplotlib.pyplot as plt
 def load_data(data_dir,batch_size,logger):
 
     transform = transforms.Compose([
-        transforms.Resize((32,32)),
+        transforms.Resize((96,96)),
         transforms.RandomRotation(10),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomVerticalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.5,0.5,0.5),
-        (0.5,0.5,0.5))
+        transforms.Normalize([0.5,0.5,0.5],
+        [0.5,0.5,0.5])
         ])
 
     random_seed = 42
@@ -31,13 +30,13 @@ def load_data(data_dir,batch_size,logger):
 
     train_set,validation_set,test_set = random_split(data_set, [num_train,num_valid,num_test])
 
-    train_dataloader = DataLoader(dataset=train_set,batch_size=batch_size,shuffle=True)
-    validation_dataloader = DataLoader(dataset=validation_set,batch_size=batch_size,shuffle=True)
-    test_dataloader = DataLoader(dataset=test_set,batch_size=batch_size,shuffle=True)
+    train_dataloader = DataLoader(dataset=train_set,batch_size=batch_size,shuffle=True,num_workers=8)
+    validation_dataloader = DataLoader(dataset=validation_set,batch_size=batch_size,shuffle=True,num_workers=8)
+    test_dataloader = DataLoader(dataset=test_set,batch_size=batch_size,shuffle=True,num_workers=8)
 
     dataloaders = {
         "train": train_dataloader,
-        "validation": validation_dataloader,
+        "val": validation_dataloader,
         "test": test_dataloader }
 
     class_names = data_set.classes
@@ -48,7 +47,7 @@ def load_data(data_dir,batch_size,logger):
                         'val_size': len(validation_dataloader)*batch_size,
                         'test_size':len(test_dataloader)*batch_size}
 
-    logger['config/dataset/'] = dataset_parameters
+    # logger['config/dataset/'] = dataset_parameters
 
     return dataloaders,class_names
 
