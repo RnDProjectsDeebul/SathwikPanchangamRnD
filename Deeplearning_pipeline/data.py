@@ -47,7 +47,7 @@ def load_data(data_dir,batch_size,logger):
                         'val_size': len(validation_dataloader)*batch_size,
                         'test_size':len(test_dataloader)*batch_size}
 
-    # logger['config/dataset/'] = dataset_parameters
+    logger['config/dataset/'] = dataset_parameters
 
     return dataloaders,class_names
 
