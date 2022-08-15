@@ -1,0 +1,8 @@
+{
+    "Path" : "/home/sathwikpanchngam/rnd/github_projects/SathwikPanchangamRnD/Synthetic_dataset_generator/output",
+    "Num_images_per_class":5,
+    "Image_resolution":["96","96"],
+    "random_rotation":"True",
+    "random_lighting":"True"
+
+}
