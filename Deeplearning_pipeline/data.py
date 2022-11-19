@@ -20,6 +20,11 @@ def load_data(data_dir,batch_size,logger):
         [0.5,0.5,0.5])
         ])
 
+    # val_transform = transforms.Compose([transforms.Resize(96,96),
+    # transforms.ToTensor(),
+    # transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
+    #     ])
+
     random_seed = 42
     torch.manual_seed(random_seed)
 
@@ -47,9 +52,102 @@ def load_data(data_dir,batch_size,logger):
                         'val_size': len(validation_dataloader)*batch_size,
                         'test_size':len(test_dataloader)*batch_size}
 
-    logger['config/dataset/'] = dataset_parameters
+    if logger != None:
+        logger['config/dataset/'] = dataset_parameters
+    else:
+        pass
 
     return dataloaders,class_names
+
+
+def load_synthetic_data(data_dir,batch_size,logger):
+    transform = transforms.Compose([
+        transforms.Resize((96,96)),
+        transforms.RandomRotation(10),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5,0.5,0.5],
+        [0.5,0.5,0.5])
+        ])
+    random_seed = 42
+    torch.manual_seed(random_seed)
+
+    data_set = ImageFolder(data_dir,transform=transform)
+    num_valid = int(np.floor(0.3*len(data_set)))
+    num_train = len(data_set)-num_valid
+
+    train_set,validation_set = random_split(data_set, [num_train,num_valid])
+
+    train_dataloader = DataLoader(dataset=train_set,batch_size=batch_size,shuffle=True,num_workers=8)
+    validation_dataloader = DataLoader(dataset=validation_set,batch_size=batch_size,shuffle=True,num_workers=8)
+
+    dataloaders = {
+        "train": train_dataloader,
+        "val": validation_dataloader,
+        }
+
+    class_names = data_set.classes
+
+    dataset_parameters={'transforms': transform,
+                        'random_seed':random_seed,
+                        'train_size': len(train_dataloader)*batch_size,
+                        'val_size': len(validation_dataloader)*batch_size,
+                        }
+    if logger != None:
+        logger['config/dataset/'] = dataset_parameters
+    else:
+        pass
+
+    return dataloaders,class_names
+    
+
+
+
+
+def load_test_data(data_dir,batch_size,logger):
+    """
+    
+    
+    """
+    random_seed = 42
+    transform = transforms.Compose([
+        transforms.Resize((96,96)),
+        transforms.RandomRotation(10),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
+    ])
+
+    torch.manual_seed(random_seed)
+
+    test_set = ImageFolder(data_dir,transform=transform)
+
+    test_dataloader = DataLoader(
+                                dataset=test_set,
+                                batch_size=batch_size,
+                                shuffle=True,
+                                num_workers=8
+                                )
+
+    class_names = test_set.classes
+
+    dataloaders = {
+        "test": test_dataloader,
+        }
+
+    dataset_parameters={'transforms': transform,
+                        'random_seed':random_seed,
+                        'test_set_size':len(test_dataloader)*batch_size,
+                        'num_of_classes': len(class_names)
+                        }
+
+    if logger != None:
+        logger['config/dataset/'] = dataset_parameters
+    else:
+        pass    
+
+    return dataloaders,class_names
+
+
 
 def imshow(img):
     img = img/2 + 0.5
