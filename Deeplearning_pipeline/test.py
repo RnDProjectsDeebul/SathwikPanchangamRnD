@@ -11,18 +11,6 @@ import sys
 import neptune.new as neptune
 import matplotlib.pyplot as plt
 
-# Initialing the neptune logger.
-logger = True  # spanch2s
-if logger:
-    # run = neptune.init('Provide your neptune ai key')
-    run = neptune.init(
-    project="sathwik-panchangam/RnD-Experiment-Results",
-    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI3M2NjMWM4NC02OWMyLTQzMmQtYmYxMC01MmM1NjAyMGRhMjIifQ==",
-    tags = ["realworld","cross_entropy","Resnet18","Robocup"],
-    name="realworld-testing-crossentropy-resnet18",
-    )
-else:
-    run = None
 
 # Set the dataset path
 data_dir = '/home/sathwikpanchngam/rnd/Final_experiments/datasets/real_world/asus_combined'
@@ -49,6 +37,18 @@ worst_preds_name = 'worst_pred'+str(parameters['model_name'])+ str(parameters['l
 # Set name for confusion matrix plot
 confusion_matrix_name = 'confusion_matrix'+str(parameters['model_name'])+ str(parameters['loss_function'])+ data_set_type
 
+# Initialing the neptune logger.
+logger = True  # spanch2s
+if logger:
+    # run = neptune.init('Provide your neptune ai key')
+    run = neptune.init(
+    project="sathwik-panchangam/RnD-Experiment-Results",
+    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI3M2NjMWM4NC02OWMyLTQzMmQtYmYxMC01MmM1NjAyMGRhMjIifQ==",
+    tags = ["realworld","cross_entropy","Resnet18","Robocup"],
+    name= "testing" + "-" + str(data_set_type) + "-" + str(parameters['model_name']) + "-" + str(parameters['loss_function']),
+    )
+else:
+    run = None
 
 # set the device
 device = parameters['device']
