@@ -1,60 +1,88 @@
-import pathlib
 import torch
 from torch import nn
-from data import load_data
+from data import load_data, load_synthetic_data
 # from data1 import load_data1
 import neptune.new as neptune
-from torchvision.models import resnet18
+from torchvision.models import resnet18, mobilenet_v2
 from train import train_model
-from helpers import save_architecture_txt
+from helpers import save_architecture_txt,get_model
 from losses import mse_loss,edl_loss,edl_mse_loss
 
-# Initialing the neptune logger.
-run = neptune.init('Provide your neptune ai key')
 
 # Set the dataset path for train data and saving the results
-data_dir = 'set_path/training_dataset'
-save_path = 'set_path/to_save_results'
+
+# Real world datasets
+data_dir = '/home/sathwikpanchngam/rnd/Final_experiments/datasets/real_world/asus_combined'
+
+# Synthetic datasets 
+# data_dir = '/home/sathwikpanchngam/rnd/Mid_term/Datasets/asus_different_lighting/normal'
+
+# Save path for results
+# save_path = '/home/sathwikpanchngam/rnd/Final_experiments/results/real_world/robocup/cross_entropy/mobilenet/'
+save_path = '/home/sathwikpanchngam/rnd/Final_experiments/results/real_world/robocup/cross_entropy/mobilenet/'
+
+# data_dir = 'set_path/training_dataset'
+# save_path = 'set_path/to_save_results'
 
 # Creating a dictionary for the parameters.
-parameters = { 'num_epochs': 40,
-                'num_classes': 11,
-                'batch_size': 32, 
-                'model_name':'Resnet18',
+parameters = { 'num_epochs': 20,
+                'num_classes': 15,
+                'batch_size': 64, 
+                'model_name':'Mobilenetv2',
+                'loss_function':'Crossentropy',
                 'lr': 1e-3,
                 'weight_decay':1e-5,
                 'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu")}
-                
-# Logging hyperparameters.
-run['config/hyperparameters'] = parameters
 
-# Load the dataloaders
-dataloader,class_names = load_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
+# 'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# Creating a model for the network
-model = resnet18(weights = 'DEFAULT')
-model.fc = nn.Linear(in_features=512,out_features=parameters['num_classes'])
+# Get the model/create the dnn model
+model = get_model(parameters['model_name'],num_classes=parameters['num_classes'])
 
-# Uncertainty is required or not.
-uncertainty = True
-
-# Creating a loss function
-if uncertainty:
+# Create the loss function
+if parameters['loss_function'] == 'Crossentropy':
+    loss_function = nn.CrossEntropyLoss()
+elif parameters['loss_function'] == 'Evidential':
     loss_function = edl_mse_loss
 else:
-    loss_function = nn.CrossEntropyLoss()
+    raise NotImplementedError
+
+
+# uncertainty required or not True if evidential loss
+uncertainty = False
 
 # Creating an optimizer
 optimizer = torch.optim.Adam(model.parameters(),lr=parameters['lr'],weight_decay = parameters['weight_decay'])
 
+
 # Define scheduler
-lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+# lr_scheduler = None
+lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer=optimizer,T_0=10,T_mult=2,eta_min=1e-4)
 
-# Log the model architecture, loss_function and optimizer
-run['config/model'] = type(model).__name__
-run['config/criterion'] = type(loss_function).__name__
-run['config/optimizer'] = type(optimizer).__name__
+# Initialing the neptune logger.
+logger = True  # spanch2s
+if logger:
+    # run = neptune.init('Provide your neptune ai key')
+    run = neptune.init(
+    project="sathwik-panchangam/Pytorch-classification",
+    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI3M2NjMWM4NC02OWMyLTQzMmQtYmYxMC01MmM1NjAyMGRhMjIifQ==",
+    )
+    # Logging hyperparameters.
+    run['config/hyperparameters'] = parameters
+    # Log the model architecture, loss_function and optimizer
+    run['config/model'] = type(model).__name__
+    run['config/criterion'] = parameters['loss_function']
+    run['config/optimizer'] = type(optimizer).__name__
+else:
+    run = None
+
+# Load the dataloaders for real world
+dataloader,class_names = load_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
+
+# Load the dataloader for synthetic data.
+# dataloader,class_names = load_synthetic_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
+
 
 # Save model architecture as a text file
 save_architecture_txt(model=model,dir_path=save_path,filename=parameters['model_name'])
@@ -68,9 +96,13 @@ training_results = train_model(model=model,
                                 scheduler=lr_scheduler,
                                 dataloaders=dataloader,
                                 class_names = class_names ,
-                                logger=run)
+                                logger=run,
+                                results_file_path =save_path)
 
-best_model,train_losses,valid_losses = training_results
+best_model = training_results
+
+torch.save(best_model.state_dict(),save_path+str('/model.pth'))
+
 
 # TODO: Add conusion matrix plots, losses plots using seaborn and pandas and save the results 
 # TODO: show_sample_images. 
