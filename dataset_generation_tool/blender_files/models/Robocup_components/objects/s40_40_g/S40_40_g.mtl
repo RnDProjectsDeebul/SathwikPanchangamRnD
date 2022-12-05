@@ -1,0 +1,14 @@
+# Blender 3.3.1 MTL File: 'S40_40_g.blend'
+# www.blender.org
+
+newmtl S40_40_g
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd S40_40_g_basecolor.jpg
+map_Ns S40_40_g_roughness.jpg
+map_refl S40_40_g_metallic.jpg
+map_Bump -bm 1.000000 S40_40_g_normal.jpg

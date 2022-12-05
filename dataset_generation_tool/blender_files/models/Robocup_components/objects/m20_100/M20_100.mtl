@@ -1,0 +1,14 @@
+# Blender 3.3.1 MTL File: 'M20_100.blend'
+# www.blender.org
+
+newmtl M20_100
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd M20_100_basecolor.jpg
+map_Ns M20_100_roughness.jpg
+map_refl M20_100_metallic.jpg
+map_Bump -bm 1.000000 M20_100_normal.jpg

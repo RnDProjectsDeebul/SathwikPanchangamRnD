@@ -1,0 +1,14 @@
+# Blender 3.3.1 MTL File: 'Motor.blend'
+# www.blender.org
+
+newmtl Motor
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Motor_basecolor.png
+map_Ns Motor_roughness.jpg
+map_refl Motor_metallic.jpg
+map_Bump -bm 1.000000 Motor_normal.jpg

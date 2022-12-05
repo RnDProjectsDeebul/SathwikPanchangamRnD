@@ -1,0 +1,24 @@
+# Blender 3.3.1 MTL File: 'Bearing.blend'
+# www.blender.org
+
+newmtl Material
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Bearing_basecolor.jpg
+map_Ns Bearing_roughness.jpg
+map_refl Bearing_metallic.jpg
+map_Bump -bm 1.000000 Bearing_normal.jpg
+
+newmtl black
+Ns 49.607449
+Ka 0.172727 0.172727 0.172727
+Kd 0.003960 0.003960 0.003960
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
