@@ -1,0 +1,55 @@
+{
+    "output_path" : "/home/sathwikpanchngam/rnd/Final_experiments/datasets/object_detection_dataset/",
+    "textures_path": "/home/sathwikpanchngam/rnd/github_projects/SathwikPanchangamRnD/dataset_generation_tool/blender_files/textures/",
+    "Num_images_per_class": 15,
+    "render_parameters":{
+        "device":"GPU",
+        "res_x":"96",
+        "res_y":"96",
+        "num_samples":"256"
+    },
+    "Parameters":{
+        "random_lighting":"True",
+        "random_rotation":"True",
+        "random_distance":"True",
+        "random_background":"False"
+    },
+    "Test_cases":{
+        "bright_lighting":{
+            "condition":"False",
+            "min_value":"3",
+            "max_value":"8"
+        },
+        "dark_lighting":{
+            "condition":"False",
+            "min_value":"-1",
+            "max_value":"2"
+        },
+        "normal_lighting":{
+            "condition":"False",
+            "min_value":"15",
+            "max_value":"25"
+        },
+        "near_distance":{
+            "condition":"False",
+            "min_value":"180",
+            "max_value":"220"
+        },
+        "far_distance":{
+            "condition":"False",
+            "min_value":"40",
+            "max_value":"80"
+        },
+        "normal_distance":{
+            "condition":"False",
+            "min_value":"120",
+            "max_value":"160"
+        },
+        "random_background_colors":{
+            "condition":"False"
+        },
+        "random_background_textures":{
+            "condition":"True"
+        }
+    }
+}
