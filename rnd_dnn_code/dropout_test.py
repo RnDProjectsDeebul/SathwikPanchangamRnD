@@ -56,8 +56,8 @@ logger = False
 if logger:
     # run = neptune.init('Provide your neptune ai key')
     run = neptune.init(
-    project="sathwik-panchangam/RnD-Final-Experiments",
-    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI3M2NjMWM4NC02OWMyLTQzMmQtYmYxMC01MmM1NjAyMGRhMjIifQ==",
+    project="provide-neptune-project-name",
+    api_token="provide-neptune-api-token",
     tags = ["Testing",dataset_name,str(parameters['test_for']),str(parameters['model_name'])],
     name= "Testing" + "-" + str(dataset_name) + "-" + str(parameters['model_name']) + "-" + str(parameters['test_for']),
     )
