@@ -17,6 +17,73 @@ import seaborn as sn
 from sklearn.metrics import classification_report,accuracy_score,f1_score,precision_score,recall_score
 from scikitplot.metrics import plot_confusion_matrix
 
+# helper function for dropout testing
+# Dropout test code.
+def test_for_dropout(dataloader,model,device,loss_function,num_farward_passes):
+  """ Function for testing/inference of dropout model
+  """
+  # Results variables
+  images_list = []
+  # probabilitites_list = [[] for _ in range(num_farward_passes)] # => output_predictions
+  confidences_list = []
+
+  true_labels_list = []
+  pred_labels_list = []
+  # Dropout variables
+  output_predictions = [[] for _ in range(num_farward_passes)]
+  # Dropout
+  if loss_function=='Crossentropy':
+      print("Started testing for dropout")
+      # Set the model to training mode to enable dropout
+      # Begin testing
+      with torch.no_grad():
+
+          for batch_idx,(inputs,labels) in enumerate(dataloader):
+              for image,label in zip(inputs,labels):
+                  images_list.append(image)
+                  true_labels_list.append(label)
+              inputs,labels = inputs.to(device),labels.to(device)
+
+              for fwd_pass in range(num_farward_passes):
+
+                  # Set the model to train mode, i.e enable dropout
+                  # Change the code based on timm models
+                  model.train()
+                  model.to(device=device)
+
+                  # Get the logits
+                  output = model(inputs)
+                  output = torch.softmax(output,dim=1)
+
+                  # Save probabilities and multinomial output both are same here.
+                  np_output = output.detach().cpu().numpy()
+
+                  # Store the results from farward passes
+                  if not output_predictions[fwd_pass] != []:
+                      output_predictions[fwd_pass] = np_output
+                      #print("First values")
+                  else:
+                      output_predictions[fwd_pass] = np.vstack((output_predictions[fwd_pass], np_output))
+                      #print("Stacking the values")
+
+      # Compute dropout results           
+      output_predictions = np.stack(output_predictions,axis=1)
+      probabilities = np.mean(output_predictions,axis=1)
+      confidences_list.extend(np.max(probabilities,axis=1))
+      pred_labels_list.extend(np.argmax(probabilities,axis=1))
+
+      # return dropout results
+      dropout_results_dict = {
+          "true_labels": np.array(true_labels_list),
+          "pred_labels": np.array(pred_labels_list),
+          "probabilities":probabilities,
+          "model_output":output_predictions,
+          "images_list": images_list,
+          "confidences": np.array(confidences_list),
+          }
+
+      return dropout_results_dict
+
 # helper funciton for ensemble testing
 def test_for_ensembles(dataloader,ensemble_models,device,loss_function):
   """ Function for testing/inference of ensemble models
