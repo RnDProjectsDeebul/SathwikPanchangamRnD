@@ -18,6 +18,32 @@ from sklearn.metrics import classification_report,accuracy_score,f1_score,precis
 from scikitplot.metrics import plot_confusion_matrix
 from scipy.stats import dirichlet, multinomial
 
+# helper to create dnn models
+def get_model(model_name,num_classes):
+  """ Function for creating DNN model from torchvision models
+  """
+  # Creating a DNN model.
+  if model_name == 'Resnet18':
+      model = resnet18(weights = 'DEFAULT')
+      assert model.__class__.__name__ == 'ResNet'
+      # Set the output features of the last layer of the model to number of classes.
+      model.fc = nn.Linear(in_features=512,out_features=num_classes)
+  elif model_name == 'Mobilenetv2':
+      model = mobilenet_v2(weights='DEFAULT')
+      assert model.__class__.__name__ == 'MobileNetV2'
+      # Set the output features of the last layer of the model to number of classes.
+      model.classifier[1] = nn.Linear(in_features=1280,out_features=num_classes)
+  elif model_name == 'Resnet34':
+      model = resnet34(weights='DEFAULT')
+      assert model.__class__.__name__ == 'ResNet'
+      # Set the output features of the last layer of the model to number of classes.
+      model.fc = nn.Linear(in_features=512,out_features=num_classes)
+  elif model_name == 'Mobilenetv3_small':
+      model = mobilenet_v3_small(weights='DEFAULT')
+      assert model.__class__.__name__ == 'MobileNetV3'
+      model.classifier[3] = nn.Linear(in_features=1024,out_features=num_classes)
+  return model
+
 # helper functions for computing entropy values
 def get_multinomial_entropy( p_values ):
   """Function to compute entropy values for multinomial distribution
