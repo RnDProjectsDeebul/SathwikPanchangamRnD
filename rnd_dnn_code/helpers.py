@@ -18,6 +18,123 @@ from sklearn.metrics import classification_report,accuracy_score,f1_score,precis
 from scikitplot.metrics import plot_confusion_matrix
 from scipy.stats import dirichlet, multinomial
 
+# relu evidence for evidential code
+def relu_evidence(y):
+    return F.relu(y)
+  
+# Cross entropy and evidential test code.
+def test_one_epoch(dataloader,model,device,loss_function):
+  print("Started testing")    
+
+  images_list = []
+  labels_list = []
+
+  true_labels = []
+  predicted_labels = []
+
+  softmax_probabilities = []
+  softmax_confidences = []
+  cross_entropy_output = []
+
+  evidential_probabilities = []
+  dirichlet_alpha_output = []
+  evidential_confidences = []
+
+  # Begin testing
+  with torch.no_grad():
+      for batch_idx,(inputs,labels) in enumerate(dataloader):
+          inputs,labels = inputs.to(device),labels.to(device)
+          for image,label in zip(inputs,labels):
+              images_list.append(image)
+              labels_list.append(label)
+
+          # CROSS ENTROPY
+          if loss_function == 'Crossentropy':
+              print("Testing for cross entropy loss")  
+              model.eval()
+              model.to(device=device)
+              # Get the logits
+              logits = model(inputs)
+              # Save the logits
+              cross_entropy_output.extend(logits.cpu().numpy())
+              # Softmax output
+              outputs = torch.softmax(logits,dim=1)
+              # Save softmax output
+              softmax_probabilities.extend(outputs.cpu().numpy())
+              # Get the confidences
+              confidences,predictions = torch.max(outputs,1)
+              # Save confidences
+              softmax_confidences.extend(confidences.cpu().numpy())
+              # Save predicted labels.
+              predicted_labels.extend(predictions.cpu().numpy())
+              # Save true labels
+              true_labels.extend(labels.cpu().numpy())
+          # EVIDENTIAL
+          elif loss_function == 'Evidential':
+              print("Testing for evidential loss")  
+              model.eval()
+              model.to(device=device)
+              # Get the logits
+              logits = model(inputs)
+              # Save alpha values for evidential entropy calculation
+              evidence = relu_evidence(logits)
+              alpha = evidence + 1
+              # Save the dirchlet logits
+              dirichlet_alpha_output.extend(logits.cpu().numpy())
+              # Evidential output to probabilites
+              outputs = [round(i/np.sum(logits),4) for i in logits]
+              # Get the confidences
+              confidences,predictions = torch.max(outputs,1)
+              # Save evidential probabilities
+              evidential_probabilities.extend(outputs.cpu().numpy())
+              # Save confidences
+              evidential_confidences.extend(confidences.cpu().numpy())
+              # Save predicted labels
+              predicted_labels.extend(predictions.cpu().numpy())
+              # Save true labels
+              true_labels.extend(labels.cpu().numpy())
+
+
+  # Save cross entropy results
+  if loss_function == 'Crossentropy':
+      # Convert the results to numpy arrays
+      softmax_probs_array = np.array(softmax_probabilities)
+      pred_labels_array = np.array(predicted_labels)
+      true_labels_array = np.array(true_labels)
+      cross_entropy_logits_array = np.array(cross_entropy_output)
+      softmax_confidences_array = np.array(softmax_confidences)
+
+      ce_results_dict = {
+                      "true_labels":true_labels_array,
+                      "pred_labels":pred_labels_array,
+                      "probabilities":softmax_probs_array,
+                      "model_output":softmax_probs_array,
+                      "images_list": images_list,
+                      "labels_list": labels_list,
+                      "confidences": softmax_confidences_array
+      }
+      return ce_results_dict
+
+  # Save evidential results
+  elif loss_function == 'Evidential':
+      # Convert the results to numpy arrays
+      evidential_probs_array = np.array(evidential_probabilities)
+      pred_labels_array = np.array(predicted_labels)
+      true_labels_array = np.array(true_labels)
+      evidential_logits_array = np.array(dirichlet_alpha_output)
+      evidential_confidences_array = np.array(evidential_confidences)
+
+      evi_results_dict = {
+                      "true_labels":true_labels_array,
+                      "pred_labels":pred_labels_array,
+                      "probabilities":evidential_probs_array,
+                      "model_output":evidential_logits_array,
+                      "images_list": images_list,
+                      "labels_list": labels_list,
+                      "confidences": evidential_confidences_array
+      }
+      return evi_results_dict
+
 # helper to create dnn models
 def get_model(model_name,num_classes):
   """ Function for creating DNN model from torchvision models
