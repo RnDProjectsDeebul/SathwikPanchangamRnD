@@ -17,6 +17,70 @@ import seaborn as sn
 from sklearn.metrics import classification_report,accuracy_score,f1_score,precision_score,recall_score
 from scikitplot.metrics import plot_confusion_matrix
 
+# helper funciton for ensemble testing
+def test_for_ensembles(dataloader,ensemble_models,device,loss_function):
+  """ Function for testing/inference of ensemble models
+  """
+  # Results variables
+  ensemble_image_list = []
+  ensemble_true_labels = []
+  ensemble_pred_labels = []
+  ensemble_confidences = []
+
+  # Variable for ensemble results.    
+  ensemble_outputs_list = [[] for _ in range(len(ensemble_models))]
+
+  # Test for Ensembles
+  if loss_function == 'Crossentropy':
+      print("Started Ensemble testing")
+      # Begin testing
+      with torch.no_grad():
+          for batch_idx,(inputs,labels) in enumerate(dataloader):
+              #print("batch_idx",batch_idx)
+              for image,label in zip(inputs,labels):
+                  ensemble_image_list.append(image)
+                  ensemble_true_labels.append(label)
+
+              # Set the inputs and models to cuda
+              inputs,labels = inputs.to(device),labels.to(device) 
+
+              for idx_model,model in enumerate(ensemble_models):
+
+                  # Set the model to evaluation mode
+                  model.to(device=device)
+                  model.eval()
+
+                  # Get the logits
+                  output = model(inputs)
+                  output = torch.softmax(output,dim=1)
+
+                  # Save probabilities and multinomial output both are same here.
+                  np_output = output.detach().cpu().numpy()
+
+                  if not ensemble_outputs_list[idx_model] != []:
+                      ensemble_outputs_list[idx_model] = np_output
+                     # print(ensemble_outputs_list[idx_model].shape)
+                  else:
+                      #print("idx_model",idx_model)
+                      ensemble_outputs_list[idx_model] = np.vstack((ensemble_outputs_list[idx_model] , np_output))
+
+  # Compute ensemble final results
+  ensemble_outputs_array = np.stack(np.array(ensemble_outputs_list))
+  ensemble_probabilities = np.mean(ensemble_outputs_array,axis=0)
+  ensemble_confidences.extend(np.max(ensemble_probabilities,axis=1))
+  ensemble_pred_labels.extend(np.argmax(ensemble_probabilities,axis=1))
+
+  # return ensemble results
+  ensemble_results_dict = {
+          "true_labels": np.array(ensemble_true_labels),
+          "pred_labels": np.array(ensemble_pred_labels),
+          "probabilities":ensemble_probabilities,
+          "model_output":ensemble_outputs_array,
+          "images_list": ensemble_image_list,
+          "confidences": np.array(ensemble_confidences)
+          }
+
+  return ensemble_results_dict
 
 # helper functions for plotting training results
 def plot_accuracies(train_acc,valid_acc,save_path):
