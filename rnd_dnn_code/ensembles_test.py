@@ -172,7 +172,25 @@ worst_fig = plot_predicted_images(predictions=pred_labels,
                                   results_path=save_path,
                                   plot_name= worst_preds_name
                                   )
+# Log the metrics to neptue ai
+if run !=None:
+    # Logging the results.
 
+    # log model parameters
+    run['config/hyperparameters'] = parameters
+    # log metrics
+    run['metrics/accuracy'] = accuracy_score
+    run['metrics/precision_score'] = precision_score
+    run['metrics/recall_score'] = recall_score
+    run['metrics/f1_score'] = f1_score
+    run['metrics/brier_score'] = brier_score
+    run['metrics/expected_calibration_error'] = expected_calibration_error
+    run['metrics/classification_report'] = classification_report
+    # log images
+    run['metrics/images/confusion_matrix'].upload(confusion_mat_fig)
+    run['metrics/images/best_predictions'].upload(best_fig)
+    run['metrics/images/worst_predictions'].upload(worst_fig)
+    
 # Save the results to csv files
 results_dict = {
     "true_labels": true_labels,
