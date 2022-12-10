@@ -16,6 +16,42 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 from sklearn.metrics import classification_report,accuracy_score,f1_score,precision_score,recall_score
 from scikitplot.metrics import plot_confusion_matrix
+from scipy.stats import dirichlet, multinomial
+
+# helper functions for computing entropy values
+def get_multinomial_entropy( p_values ):
+  """Function to compute entropy values for multinomial distribution
+  """
+  return multinomial(1, p_values).entropy()
+
+def get_dirchlet_entropy(alpha_values):
+  """Function for computing entropy values for dirchlet distribution
+  """
+  return dirichlet(alpha_values).entropy()
+
+def predictive_entropy(predictions):
+  """Function for calculating predictive entropy for dropout/ensemble for one image
+  """
+  epsilon = sys.float_info.min
+  predictive_entropy = -np.sum( np.mean(predictions, axis=0) * np.log(np.mean(predictions, axis=0) + epsilon),
+          axis=-1)
+  return predictive_entropy
+
+def get_entropy_dropout(stacked_probabilities):
+  """ Function for computing entropy values for dropout resutls
+  """
+  entropy_values = []
+  for img_prob in stacked_probabilities:
+      entropy_values.append(predictive_entropy(img_prob))
+  return np.array(entropy_values)
+
+def get_entropy_ensemble(stacked_probabilities):
+  """ Function for computing entropy values for ensemble resutls
+  """
+  entropy_values = []
+  for img_prob in stacked_probabilities:
+      entropy_values.append(predictive_entropy(img_prob))
+  return np.array(entropy_values)
 
 # helper function for dropout testing
 # Dropout test code.
