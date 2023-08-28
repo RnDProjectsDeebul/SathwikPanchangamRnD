@@ -1,53 +1,55 @@
 import torch
-from torchvision.models import resnet18,mobilenet_v2
 from torch import nn
-from data import load_test_data,load_data
+from data import load_test_data,load_data,load_synthetic_data
 from helpers import get_model, test_one_epoch, get_brier_score, get_expected_calibration_error,get_best_worst_predictions,plot_predicted_images
 from helpers import get_accuracy_score,get_precision_score,get_recall_score,get_f1_score,get_classification_report,plot_confusion_matrix1
 import os
 import numpy as np
 import pandas as pd
-import neptune.new as neptune
+import neptune as neptune
 import matplotlib.pyplot as plt
 from helpers import get_multinomial_entropy,get_dirchlet_entropy
+import torchvision
+from torchvision import transforms
 
 # Set the required paths
-data_dir = 'path/to/data/dir/'
-save_path = os.path.join(os.getcwd()+'/results/test_results/cross_entropy_results/') # evidential_results/
-models_path = os.path.join(os.getcwd()+'/results/training_results/cross_entropy_results/') # evidential_results/
+data_dir = '/path/test_data/'
+models_path = '/path/trained_models/'
+save_path = '/path/test_results/'
 
 # Creating a dictionary for the parameters. 
-# Model names : Resnet18, Mobilenetv2, Mobilenet_v3_small,Resnet34
+# Model names : Resnet18, Mobilenetv2, Mobilenetv3_small,Resnet34
 # Loss funcitons: Crossentropy, Evidential
-parameters = {  'num_classes': 15,
+parameters = {  'num_classes': 35,
                 'batch_size': 64, 
                 'model_name':'Resnet18',
-                'loss_function': 'Crossentropy',
-                'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu")}
-
-
-# Set the model path
-model_path = str(models_path)+'model.pth'
+                'loss_function': 'Evidential',
+                'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                'logger': False,
+             }
 
 # Set dataset type for the file name to save the best and worst preds plot 
-data_set_type = 'normal_lighting'
+data_set_type = 'distance' # blur,normal, etc..
+
+# Set the model path
+model_path = str(models_path)+'normal_'+parameters['loss_function']+'_Resnet18_model.pth'
 
 condition_name = str(data_set_type)+'_'+str(parameters['loss_function'])+'_'+str(parameters['model_name'])
+print(condition_name)
 
-best_preds_name = 'best_pred'+str(parameters['model_name'])+ str(parameters['loss_function'])+ data_set_type
-worst_preds_name = 'worst_pred'+str(parameters['model_name'])+ str(parameters['loss_function'])+ data_set_type
+best_preds_name = 'best_pred_'+condition_name
+worst_preds_name = 'worst_pred_'+condition_name
 
 # Set name for confusion matrix plot
-confusion_matrix_name = 'confusion_matrix'+str(parameters['model_name'])+ str(parameters['loss_function'])+ data_set_type
+confusion_matrix_name = 'confusion_matrix_'+str(parameters['model_name'])+'_'+ str(parameters['loss_function'])+ '_'+data_set_type
 
 # Initialing the neptune logger.
-logger = True  # spanch2s
-if logger:
+if parameters['logger']:
     # run = neptune.init('Provide your neptune ai key')
     run = neptune.init(
-    project="provide-neptune-project-name",
-    api_token="provide-neptune-api-token",
-    tags = [str(data_set_type),str(parameters['loss_function']),str(parameters['model_name']),"Robocup"],
+    project="provide project name",
+    api_token="provide api key",
+    tags = [str(data_set_type),str(parameters['loss_function']),str(parameters['model_name']),"Robocup","Testing"],
     name= "testing" + "-" + str(data_set_type) + "-" + str(parameters['model_name']) + "-" + str(parameters['loss_function']),
     )
 else:
@@ -57,21 +59,33 @@ else:
 device = parameters['device']
 
 # Get the model/create the dnn model
-model = get_model(parameters['model_name'],num_classes=parameters['num_classes'])
+model = get_model(parameters['model_name'],num_classes=parameters['num_classes'],weights=False)
 
 # Load the best saved model from the training results.
 model.load_state_dict(torch.load(model_path))
 model.eval()
 model.to(device=device)
 
-# Load the dataloaders for real world
-dataloader,class_names = load_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
+if data_set_type == 'normal':
+    # Load the dataloader for synthetic data.
+    dataloader,class_names = load_synthetic_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
+else:
+    # Load the dataloader for synthetic data.
+    dataloader,class_names = load_test_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
 
-# Load the dataloader for synthetic data.
-# dataloader,class_names = load_test_data(data_dir=data_dir,batch_size=parameters['batch_size'],logger=run)
 
-test_loader = dataloader['test']
+test_loader = dataloader['val']
+
+# dataloader = {"train": train_loader, "val": test_loader}
+print("Class names : ",class_names)
+print("No of classes : ", len(class_names))
+# print("Number of train images : ",len(train_loader)*parameters['batch_size'])
+
+# print(test_loader.sampler)
+
 print("Number of test images : ",len(test_loader)*parameters['batch_size'])
+
+
 
 results = test_one_epoch(model=model,
                          dataloader=test_loader,
@@ -86,7 +100,7 @@ confidences = results['confidences']
 probabilities = results['probabilities']
 model_output = results['model_output']
 images_list = results['images_list']
-labels_list = results['labels_list']
+image_paths = results['image_paths']
 
 # Get best and worst predictions
 best_predictions,worst_predictions = get_best_worst_predictions(confidences)
@@ -111,14 +125,15 @@ print("\nClassification report : ",classification_report)
 
 # Uncertainty metrics
 brier_score = get_brier_score(y_true=true_labels,y_pred_probs=probabilities)
+print("\n Shape of true labels is : ",true_labels.shape)
 expected_calibration_error = get_expected_calibration_error(y_true=true_labels,y_pred=probabilities)
 
-print("Brier Score : ", brier_score)
+print("Brier Score : ", round(brier_score,5))
 print('--'*20)
-print("Expected calibration error : ", expected_calibration_error)
+print("Expected calibration error : ", round(expected_calibration_error,5))
 
-# Get best and worst predictions
-best_predictions,worst_predictions = get_best_worst_predictions(confidences)
+# # Get best and worst predictions
+# best_predictions,worst_predictions = get_best_worst_predictions(confidences)
 
 # Plot confusion matrix
 confusion_mat_fig = plot_confusion_matrix1(true_labels=true_labels,
@@ -130,7 +145,7 @@ confusion_mat_fig = plot_confusion_matrix1(true_labels=true_labels,
 # Plot the best and worst predictions.
 best_fig = plot_predicted_images(predictions=pred_labels,
                                  confidences_pred_images=confidences,
-                                 images=images_list,
+                                 image_paths=image_paths,
                                  labels=true_labels,
                                  class_names=class_names,
                                  plot_preds=best_predictions,
@@ -140,7 +155,7 @@ best_fig = plot_predicted_images(predictions=pred_labels,
 
 worst_fig = plot_predicted_images(predictions=pred_labels,  
                                   confidences_pred_images=confidences,
-                                  images=images_list,
+                                  image_paths=image_paths,
                                   labels=true_labels,
                                   class_names=class_names,
                                   plot_preds=worst_predictions,
@@ -169,25 +184,43 @@ if run !=None:
     run['metrics/images/best_predictions'].upload(best_fig)
     run['metrics/images/worst_predictions'].upload(worst_fig)
 
-
+# probabilities_file_path = str(save_path)+str(condition_name)+'_probabilities.csv'
+# probabilities_df.to_csv(path_or_buf=probabilities_file_path)
 # Calculate entropy values
 if parameters['loss_function']=='Crossentropy':
     entropy_values = get_multinomial_entropy(probabilities)
+    # Save probabilities to csv file
+    probabilities_df = pd.DataFrame(probabilities)
+
 elif parameters['loss_function']== 'Evidential':
     entropy_values = get_dirchlet_entropy(probabilities)
+    # Save probabilities to csv file
+    probabilities_df = pd.DataFrame(model_output)
+    
 
 # Save the results to csv files
 results_dict = {
     "true_labels": true_labels,
     "pred_labels":pred_labels,
     "confidences":confidences,
-    "entropy_values":entropy_values
+    "image_paths": image_paths
 }
+# "entropy_values":entropy_values,
+# probabilities_dict = {"probabilities":probabilities}
 results_df = pd.DataFrame(results_dict)
 dr_results_file_path = str(save_path)+str(condition_name)+'_entropy_results.csv'
-results_df.to_csv(path_or_buf=dr_results_file_path,sep=',')
+# results_df.to_csv(path_or_buf=dr_results_file_path,sep=',')
 
-# Save probabilities to csv file
-probabilities_file_path = str(save_path)+str(condition_name)+'_probabilities.csv'
-probabilities_df = pd.DataFrame(probabilities)
-probabilities_df.to_csv(path_or_buf=probabilities_file_path)
+
+# Final dataframe
+final_results_file_path = str(save_path)+str(condition_name)+'_results.csv'
+final_df = pd.concat([results_df,probabilities_df],axis=1)
+final_df['ue'] = parameters['loss_function']
+final_df['architecture'] = parameters['model_name']
+final_df['constraint'] = data_set_type
+final_df.to_csv(path_or_buf=final_results_file_path)
+
+# Save model outputs to csv file
+model_out_file_path = str(save_path)+str(condition_name)+'_model_output.csv'
+model_out_df = pd.DataFrame(model_output)
+model_out_df.to_csv(path_or_buf=model_out_file_path)
